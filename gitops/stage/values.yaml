@@ -1,6 +1,6 @@
 deployments:
   - name: views-frontend
-    namespace: frontend-dev
+    namespace: frontend-stage
     replicas: 
 
     containers:
