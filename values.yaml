@@ -8,7 +8,7 @@ deployments:
         image:
           registry: docker.io
           repository: varunsoam/views-frontend
-          tag: "342"
+          tag: "343"
 
         ports:
           - name: http
