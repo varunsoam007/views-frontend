@@ -1,0 +1,8 @@
+apiVersion: v2
+name: views-frontend
+version: 0.1.0
+
+dependencies:
+- name: global-templates
+  version: 1.16.1
+  repository: oci://registry-1.docker.io/varunsoam
