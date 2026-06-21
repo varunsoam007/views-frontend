@@ -17,6 +17,7 @@ deployments:
 services:
   - name: views-frontend
     namespace: frontend
+    type: LoadBalancer
 
     ports:
       - name: http
