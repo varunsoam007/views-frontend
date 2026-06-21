@@ -1,0 +1,21 @@
+deployments:
+  - name: views-frontend
+    namespace: frontend-dev
+    replicas: 1
+
+    containers:
+      - name: views-frontend
+        image:
+          registry: docker.io
+          repository: varunsoam/views-frontend
+          tag: "343"
+
+services:
+  - name: views-frontend
+    namespace: frontend-dev
+    type: LoadBalancer
+
+    ports:
+      - name: http
+        port: 80
+        targetPort: 80

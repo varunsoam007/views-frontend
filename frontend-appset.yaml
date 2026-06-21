@@ -1,0 +1,41 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+
+metadata:
+  name: views-frontend
+  namespace: argocd
+
+spec:
+  generators:
+  - list:
+      elements:
+      - env: dev
+      - env: stage
+      - env: prod
+
+  template:
+    metadata:
+      name: 'views-frontend-{{env}}'
+
+    spec:
+      project: default
+
+      source:
+        repoURL: https://github.com/varunsoam007/views-frontend.git
+        targetRevision: main
+        path: .
+        helm:
+          valueFiles:
+            - gitops/{{env}}/values.yaml
+
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: frontend-{{env}}
+
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+
+        syncOptions:
+        - CreateNamespace=true
