@@ -1,0 +1,51 @@
+{{- define "global-templates.grafanadashboard" -}}
+{{- $global_values := .Values.global}}
+{{- $common_defaults := .Values.common_defaults }}
+{{- range .grafanadashboards }}
+{{- if not .disabled }}
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaDashboard
+metadata:
+  name: {{ required "GrafanaDashboard has to include a name" .name }}
+  namespace: {{ include "helpers.prefixNamespace" (dict "namespace" .namespace "global" $global_values) }}
+  labels:
+    dashboards: grafana
+    {{- include "helpers.labels" (dict "context" $ "customLabels" .labels "defaultLabels" $common_defaults.labels) | nindent 4 }}
+  annotations:
+    argocd.argoproj.io/sync-options: ServerSideApply=true
+    {{- if or .annotations $common_defaults.annotations }}
+    {{- include "helpers.annotations" (dict "context" $ "customAnnotations" .annotations "defaultAnnotations" $common_defaults.annotations) | nindent 4 }}
+    {{- end }}
+spec:
+  allowCrossNamespaceImport: {{ .allowCrossNamespaceImport | default true }}
+  instanceSelector:
+    matchLabels:
+      {{- if .instanceSelector }}
+      {{- include "common.tplvalues.render" ( dict "value" .instanceSelector "context" $) | nindent 6 }}
+      {{- else }}
+      dashboards: grafana
+      {{- end }}
+  {{- if .folderRef }}
+  folderRef: {{ .folderRef }}
+  {{- end }}
+  {{- if .json }}
+  json: {{ .json | toJson }}
+  {{- else if .url }}
+  url: {{ .url }}
+  {{- else if .gzipJson }}
+  gzipJson: {{ .gzipJson }}
+  {{- else if .jsonnet }}
+  jsonnet: {{ .jsonnet | toJson }}
+  {{- end }}
+  {{- if .datasources }}
+  datasources:
+    {{- include "common.tplvalues.render" (dict "value" .datasources "context" $) | nindent 4 }}
+  {{- end }}
+  {{- if .plugins }}
+  plugins:
+    {{- include "common.tplvalues.render" (dict "value" .plugins "context" $) | nindent 4 }}
+  {{- end }}
+{{- end }}
+{{- end }}
+{{- end }}

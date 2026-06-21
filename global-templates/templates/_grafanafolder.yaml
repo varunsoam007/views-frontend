@@ -1,0 +1,34 @@
+{{- define "global-templates.grafanafolder" -}}
+{{- $global_values := .Values.global}}
+{{- $common_defaults := .Values.common_defaults }}
+{{- range .grafanafolders }}
+{{- if not .disabled }}
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaFolder
+metadata:
+  name: {{ required "GrafanaFolder has to include a name" .name }}
+  namespace: {{ include "helpers.prefixNamespace" (dict "namespace" .namespace "global" $global_values) }}
+  labels: {{ include "helpers.labels" (dict "context" $ "customLabels" .labels "defaultLabels" $common_defaults.labels) | nindent 4 }}
+  {{- if or .annotations $common_defaults.annotations }}
+  annotations: {{ include "helpers.annotations" (dict "context" $ "customAnnotations" .annotations "defaultAnnotations" $common_defaults.annotations) | nindent 4 }}
+  {{- end }}
+spec:
+  allowCrossNamespaceImport: {{ .allowCrossNamespaceImport | default true }}
+  instanceSelector:
+    matchLabels:
+      {{- if .instanceSelector }}
+      {{- include "common.tplvalues.render" ( dict "value" .instanceSelector "context" $) | nindent 6 }}
+      {{- else }}
+      dashboards: grafana
+      {{- end }}
+  {{- if .title }}
+  title: {{ .title }}
+  {{- end }}
+  {{- if .permissions }}
+  permissions:
+    {{- include "common.tplvalues.render" (dict "value" .permissions "context" $) | nindent 4 }}
+  {{- end }}
+{{- end }}
+{{- end }}
+{{- end }}

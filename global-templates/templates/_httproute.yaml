@@ -1,0 +1,153 @@
+{{- define "global-templates.httproute" -}}
+{{- $global_values := .Values.global }}
+{{- /* Support defaults even if application chart did not copy httproute_defaults to top-level */ -}}
+{{- $default_values := (.Values.httproute_defaults | default (dict "apiVersion" "gateway.networking.k8s.io/v1")) }}
+{{- $common_defaults := .Values.common_defaults }}
+{{- $globalGatewayDefault := dict }}
+{{- if and $global_values $global_values.gateways $global_values.gateways.default }}
+  {{- $globalGatewayDefault = $global_values.gateways.default }}
+{{- end }}
+{{- range .httproutes }}
+{{- if not .disabled }}
+---
+apiVersion: {{ (.apiVersion | default $default_values.apiVersion) | default "gateway.networking.k8s.io/v1" }}
+kind: HTTPRoute
+metadata:
+  name: {{ required "Name is required for each HTTPRoute" .name }}
+  namespace: {{ include "helpers.prefixNamespace" (dict "namespace" .namespace "global" $global_values) }}
+  labels: {{ include "helpers.labels" (dict "context" $ "customLabels" .labels "defaultLabels" $common_defaults.labels) | nindent 4 }}
+  {{- if or .annotations $common_defaults.annotations }}
+  annotations: {{ include "helpers.annotations" (dict "context" $ "customAnnotations" .annotations "defaultAnnotations" $common_defaults.annotations) | nindent 4 }}
+  {{- end }}
+spec:
+  parentRefs:
+    {{- if .parentRefs }}
+      {{- range .parentRefs }}
+    - name: {{ .name | default $globalGatewayDefault.name }}
+      {{- if or .namespace $globalGatewayDefault.namespace }}
+      namespace: {{ include "helpers.prefixNamespace" (dict "namespace" (.namespace | default $globalGatewayDefault.namespace) "global" $global_values) }}
+      {{- end }}
+      {{- if or .sectionName $globalGatewayDefault.sectionName }}
+      sectionName: {{ .sectionName | default $globalGatewayDefault.sectionName }}
+      {{- end }}
+      {{- end }}
+    {{- else if $globalGatewayDefault.name }}
+    - name: {{ $globalGatewayDefault.name }}
+      {{- if $globalGatewayDefault.namespace }}
+      namespace: {{ include "helpers.prefixNamespace" (dict "namespace" $globalGatewayDefault.namespace "global" $global_values) }}
+      {{- end }}
+      {{- if $globalGatewayDefault.sectionName }}
+      sectionName: {{ $globalGatewayDefault.sectionName }}
+      {{- end }}
+    {{- end }}
+  {{- if .hostnames }}
+  hostnames:
+    {{- range .hostnames }}
+    - {{ include "helpers.renderGlobalIfExists" (dict "value" . "global" $global_values) }}
+    {{- end }}
+  {{- end }}
+  rules:
+    {{- range .rules }}
+    - {{- /* Matches */ -}}
+      {{- if .matches }}
+      matches:
+        {{- range .matches }}
+        - {{- if .path }}
+          path:
+            type: {{ .path.type | default "PathPrefix" }}
+            value: {{ .path.value | quote }}
+          {{- end }}
+          {{- if .method }}
+          method: {{ .method | upper }}
+          {{- end }}
+          {{- if .headers }}
+          headers:
+            {{- range .headers }}
+            - name: {{ .name }}
+              value: {{ .value | quote }}
+            {{- end }}
+          {{- end }}
+          {{- if .queryParams }}
+          queryParams:
+            {{- range .queryParams }}
+            - name: {{ .name }}
+              value: {{ .value | quote }}
+            {{- end }}
+          {{- end }}
+        {{- end }}
+      {{- end }}
+      {{- if .backendRefs }}
+      backendRefs:
+        {{- range .backendRefs }}
+        - name: {{ .name }}
+          {{- if .group }}
+          group: {{ .group | quote }}
+          {{- end }}
+          {{- if .kind }}
+          kind: {{ .kind }}
+          {{- end }}
+          {{- if .namespace }}
+          namespace: {{ .namespace }}
+          {{- end }}
+          {{- if .port }}
+          port: {{ .port }}
+          {{- end }}
+          {{- if .weight }}
+          weight: {{ .weight }}
+          {{- end }}
+        {{- end }}
+      {{- end }}
+      {{- if .filters }}
+      filters:
+        {{- range .filters }}
+        - type: {{ .type }}
+          {{- if .requestHeaderModifier }}
+          requestHeaderModifier:
+            {{- if .requestHeaderModifier.add }}
+            add:
+              {{- range $k, $v := .requestHeaderModifier.add }}
+              {{ $k }}: {{ $v | quote }}
+              {{- end }}
+            {{- end }}
+            {{- if .requestHeaderModifier.set }}
+            set:
+              {{- range $k, $v := .requestHeaderModifier.set }}
+              {{ $k }}: {{ $v | quote }}
+              {{- end }}
+            {{- end }}
+            {{- if .requestHeaderModifier.remove }}
+            remove:
+              {{- range .requestHeaderModifier.remove }}
+              - {{ . | quote }}
+              {{- end }}
+            {{- end }}
+          {{- end }}
+          {{- if .urlRewrite }}
+          urlRewrite:
+            {{- if .urlRewrite.host }}
+            host: {{ .urlRewrite.host | quote }}
+            {{- end }}
+            {{- if .urlRewrite.path }}
+            path:
+              {{- if .urlRewrite.path.type }}
+              type: {{ .urlRewrite.path.type }}
+              {{- end }}
+              {{- if .urlRewrite.path.replacePrefixMatch }}
+              replacePrefixMatch: {{ .urlRewrite.path.replacePrefixMatch | quote }}
+              {{- end }}
+            {{- end }}
+          {{- end }}
+          {{- if .requestMirror }}
+          requestMirror:
+            backendRef:
+              name: {{ .requestMirror.backendRef.name }}
+              {{- if .requestMirror.backendRef.port }}
+              port: {{ .requestMirror.backendRef.port }}
+              {{- end }}
+          {{- end }}
+        {{- end }}
+      {{- end }}
+    {{- end }}
+{{- end }}
+{{- end }}
+{{- end }}

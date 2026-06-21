@@ -1,21 +1,25 @@
 deployments:
-  views-frontend:
-    name: views-frontend
+  - name: views-frontend
+    namespace: frontend
     replicas: 1
+
     containers:
-      views-frontend:
-        name: views-frontend
+      - name: views-frontend
         image:
           registry: docker.io
           repository: varunsoam/views-frontend
           tag: "342"
+
         ports:
-          - containerPort: 80
+          - name: http
+            containerPort: 80
 
 services:
-  views-frontend:
-    name: views-frontend
+  - name: views-frontend
+    namespace: frontend
+
     ports:
-      - port: 80
+      - name: http
+        port: 80
         targetPort: 80
         protocol: TCP
