@@ -4,7 +4,7 @@ deployments:
     replicas: 1
 
     containers:
-      - name: views-frontend
+      - name: views-frontend-dev
         image:
           registry: docker.io
           repository: varunsoam/views-frontend

@@ -1,10 +1,10 @@
 deployments:
   - name: views-frontend
     namespace: frontend-dev
-    replicas: 2
+    replicas: 
 
     containers:
-      - name: views-frontend
+      - name: views-frontend-stage
         image:
           registry: docker.io
           repository: varunsoam/views-frontend
@@ -12,7 +12,7 @@ deployments:
 
 services:
   - name: views-frontend
-    namespace: frontend-dev
+    namespace: frontend-stage
     type: LoadBalancer
 
     ports:
