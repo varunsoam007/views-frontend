@@ -17,6 +17,11 @@ spec:
     metadata:
       name: 'views-frontend-{{env}}'
 
+      annotations:
+        argocd-image-updater.argoproj.io/image-list: frontend=varunsoam/views-frontend
+        argocd-image-updater.argoproj.io/write-back-method: git
+        argocd-image-updater.argoproj.io/frontend.update-strategy: newest-build
+
     spec:
       project: default
 
